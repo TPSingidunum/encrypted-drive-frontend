@@ -2,22 +2,28 @@
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { reactive, ref } from 'vue'
+import { login } from '@/services/AuthService'
+import type { LoginFormData } from '@/dtos/LoginFormData'
+import { error } from 'console'
 
 const show = ref(false)
 const schema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(8, 'Must be at least 8 characters')
+  username: z.string(),
+  password: z.string().min(8, 'Must be at least 8 characters'),
 })
 type Schema = z.output<typeof schema>
 const state = reactive<Partial<Schema>>({
-  email: undefined,
-  password: undefined
+  username: undefined,
+  password: undefined,
 })
 
-const toast = useToast()
 async function onSubmit(event: FormSubmitEvent<Schema>) {
-  toast.add({ title: 'Success', description: 'The form has been submitted.', color: 'success' })
-  console.log(event.data)
+  try {
+    const result = login(event.data)
+    console.log(JSON.stringify(result, null, 2))
+  } catch (error: any) {
+    console.log(error)
+  }
 }
 </script>
 
@@ -29,8 +35,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       </template>
 
       <UForm :schema="schema" :state="state" class="space-y-4 flex flex-col" @submit="onSubmit">
-        <UFormField label="Email" name="email">
-          <UInput v-model="state.email" class="w-full" />
+        <UFormField label="Username" name="email">
+          <UInput v-model="state.username" class="w-full" />
         </UFormField>
 
         <UFormField label="Password" name="password">
@@ -57,9 +63,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </UFormField>
 
         <div class="flex justify-end">
-          <UButton type="submit" class="w-18 justify-center cursor-pointer">
-            Submit
-          </UButton>
+          <UButton type="submit" class="w-18 justify-center cursor-pointer"> Submit </UButton>
         </div>
       </UForm>
     </UCard>
