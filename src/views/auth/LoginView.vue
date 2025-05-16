@@ -3,10 +3,12 @@ import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { reactive, ref } from 'vue'
 import { login } from '@/services/AuthService'
-import type { LoginFormData } from '@/dtos/LoginFormData'
-import { error } from 'console'
+import { useRouter } from 'vue-router'
+import { ApiError } from '@/types/ApiError'
 
 const show = ref(false)
+const router = useRouter()
+const errorField = ref<string>("");
 const schema = z.object({
   username: z.string(),
   password: z.string().min(8, 'Must be at least 8 characters'),
@@ -19,10 +21,27 @@ const state = reactive<Partial<Schema>>({
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
-    const result = login(event.data)
-    console.log(JSON.stringify(result, null, 2))
+    const result = await login(event.data)
+
+    localStorage.setItem(`access_token`, result.accessToken)
+    localStorage.setItem(`refresh_token`, result.refreshToken)
+
+    return router.push('/')
   } catch (error: any) {
-    console.log(error)
+    if (error instanceof ApiError) {
+      switch (error.errorCode) {
+        case 1005:
+          errorField.value = "Wrong password"
+          return;
+        case 1002:
+          errorField.value = "Username does not exist"
+          return;
+        default:
+          console.log('Error Code: ' + error.errorCode)
+          return;
+      }
+    }
+    console.log('Error: ' + JSON.stringify(error, null, 2))
   }
 }
 </script>
@@ -40,30 +59,19 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </UFormField>
 
         <UFormField label="Password" name="password">
-          <UInput
-            v-model="state.password"
-            placeholder="Password"
-            :type="show ? 'text' : 'password'"
-            :ui="{ trailing: 'pe-1' }"
-          >
+          <UInput v-model="state.password" placeholder="Password" :type="show ? 'text' : 'password'"
+            :ui="{ trailing: 'pe-1' }">
             <template #trailing>
-              <UButton
-                color="neutral"
-                variant="link"
-                size="sm"
-                :icon="show ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                :aria-label="show ? 'Hide password' : 'Show password'"
-                :aria-pressed="show"
-                aria-controls="password"
-                @click="show = !show"
-                class="cursor-pointer"
-              />
+              <UButton color="neutral" variant="link" size="sm" :icon="show ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                :aria-label="show ? 'Hide password' : 'Show password'" :aria-pressed="show" aria-controls="password"
+                @click="show = !show" class="cursor-pointer" />
             </template>
           </UInput>
         </UFormField>
+        <p class="text-red-500 text-sm text-center w-full font-bold" v-if="errorField"> {{ errorField }}</p>
 
         <div class="flex justify-end">
-          <UButton type="submit" class="w-18 justify-center cursor-pointer"> Submit </UButton>
+          <UButton type="submit" class="justify-center cursor-pointer" loading-auto> Submit </UButton>
         </div>
       </UForm>
     </UCard>
