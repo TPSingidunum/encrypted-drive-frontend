@@ -2,50 +2,48 @@
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { reactive, ref } from 'vue'
-import { getJwtClaims, login } from '@/services/AuthService'
 import { useRouter } from 'vue-router'
 import { ApiError } from '@/types/ApiError'
-import { useUserStore } from '@/stores/UserStore'
+import { register } from '@/services/AuthService'
 
 const show = ref(false)
 const router = useRouter()
 const errorField = ref<string>("");
-const userStore = useUserStore();
 const schema = z.object({
   username: z.string(),
+  email: z.string().email("Must be a valid Email"),
   password: z.string().min(8, 'Must be at least 8 characters'),
+  confirmPassword: z.string().min(1, "Must enter confirmPassword"),
 })
 type Schema = z.output<typeof schema>
 const state = reactive<Partial<Schema>>({
   username: undefined,
+  email: undefined,
   password: undefined,
+  confirmPassword: undefined,
 })
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
-    const result = await login(event.data)
+    const result = await register(event.data)
 
-    localStorage.setItem(`access_token`, result.accessToken)
-    localStorage.setItem(`refresh_token`, result.refreshToken)
-    const claims = getJwtClaims(result.accessToken);
-
-    if (claims != undefined) {
-      userStore.setUser({
-        username: claims.sub,
-        email: claims.email,
-        role: claims.role
-      })
+    if (!result.success) {
+      errorField.value = "Faild to create user"
+      return;
     }
 
-    return router.push('/')
+    return router.push('/login')
   } catch (error: any) {
     if (error instanceof ApiError) {
       switch (error.errorCode) {
         case 1005:
-          errorField.value = "Wrong password"
+          errorField.value = "Passwords do not match"
           return;
-        case 1002:
-          errorField.value = "Username does not exist"
+        case 1003:
+          errorField.value = "Email already exists"
+          return;
+        case 1004:
+          errorField.value = "Username already exists"
           return;
         default:
           console.log('Error Code: ' + error.errorCode)
@@ -61,16 +59,30 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   <main class="h-full">
     <UCard class="max-w-[300px] mx-auto mt-48">
       <template #header>
-        <h1 class="font-bold justify-self-center">LogIn</h1>
+        <h1 class="font-bold justify-self-center">Register</h1>
       </template>
 
       <UForm :schema="schema" :state="state" class="space-y-4 flex flex-col" @submit="onSubmit">
-        <UFormField label="Username" name="email">
+        <UFormField label="Username" name="username">
           <UInput v-model="state.username" class="w-full" />
+        </UFormField>
+
+        <UFormField label="Email" name="email">
+          <UInput v-model="state.email" class="w-full" />
         </UFormField>
 
         <UFormField label="Password" name="password">
           <UInput v-model="state.password" placeholder="Password" :type="show ? 'text' : 'password'"
+            :ui="{ trailing: 'pe-1' }" class="w-full">
+            <template #trailing>
+              <UButton color="neutral" variant="link" size="sm" :icon="show ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                :aria-label="show ? 'Hide password' : 'Show password'" :aria-pressed="show" aria-controls="password"
+                @click="show = !show" class="cursor-pointer" />
+            </template>
+          </UInput>
+        </UFormField>
+        <UFormField label="ConfirmPassword" name="confirmPassword">
+          <UInput v-model="state.confirmPassword" placeholder="Confirm Password" :type="show ? 'text' : 'password'"
             :ui="{ trailing: 'pe-1' }" class="w-full">
             <template #trailing>
               <UButton color="neutral" variant="link" size="sm" :icon="show ? 'i-lucide-eye-off' : 'i-lucide-eye'"
@@ -86,13 +98,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </div>
       </UForm>
 
+
       <template #footer>
-        <div>
-          <p class="text-sm flex justify-center">
-            Dont have an account?
-            <RouterLink to="register" class="pl-2">Register</RouterLink>
-          </p>
-        </div>
+        <p class="text-sm flex justify-center">
+          Already have an account?
+          <RouterLink to="login" class="pl-2">Login</RouterLink>
+        </p>
       </template>
     </UCard>
   </main>
