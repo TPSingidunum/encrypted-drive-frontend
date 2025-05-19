@@ -6,11 +6,13 @@ import { getJwtClaims, login } from '@/services/AuthService'
 import { useRouter } from 'vue-router'
 import { ApiError } from '@/types/ApiError'
 import { useUserStore } from '@/stores/UserStore'
+import { useColorMode } from '@vueuse/core'
 
 const show = ref(false)
 const router = useRouter()
 const errorField = ref<string>("");
 const userStore = useUserStore();
+const mode = useColorMode()
 const schema = z.object({
   username: z.string(),
   password: z.string().min(8, 'Must be at least 8 characters'),
@@ -59,6 +61,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
 <template>
   <main class="h-full">
+    <div class="fixed top-4 right-4 z-50">
+      <UButton class="cursor-pointer" :icon="mode === 'dark' ? 'i-lucide-moon' : 'i-lucide-sun'" color="neutral"
+        variant="ghost" @click="mode = mode === 'dark' ? 'light' : 'dark'" />
+    </div>
     <UCard class="max-w-[300px] mx-auto mt-48">
       <template #header>
         <h1 class="font-bold justify-self-center">LogIn</h1>
