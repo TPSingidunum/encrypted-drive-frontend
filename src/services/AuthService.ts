@@ -1,7 +1,6 @@
 import type { LoginData } from '@/dtos/LoginData'
 import type { LoginFormData } from '@/dtos/LoginFormData'
 import type { RegisterFormData } from '@/dtos/RegisterFormData'
-import type { ApiResult } from '@/types/ApiResult'
 import apiClient, { makeRequest } from '@/services/ApiClient.ts'
 import type { Token } from '@/types/Token'
 import { jwtDecode } from 'jwt-decode'
