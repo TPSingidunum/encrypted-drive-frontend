@@ -1,29 +1,21 @@
 <script setup lang="ts">
+import { uploadFile } from '@/services/StorageService'
 import { ref } from 'vue'
 import { z } from 'zod'
 
-// Props and emits
 const emit = defineEmits(['uploaded'])
-
-// Form state
 const isOpen = ref(false)
 const uploading = ref(false)
 const selectedFile = ref<File | null>(null)
 const fileError = ref('')
-
-// We don't need the filename schema since we'll use the file's name directly
 const schema = z.object({})
-
-// Empty state since we're not collecting form data
 const state = ref({})
 
-// Close modal function
 function closeModal() {
   isOpen.value = false
   resetForm()
 }
 
-// Handle file selection
 function handleFileChange(event: Event) {
   const input = event.target as HTMLInputElement
   fileError.value = ''
@@ -43,12 +35,10 @@ function handleFileChange(event: Event) {
   }
 }
 
-// Remove the selected file
 function removeFile() {
   selectedFile.value = null
 }
 
-// Format file size for display
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 Bytes'
 
@@ -59,7 +49,6 @@ function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
-// Handle form submission
 async function onSubmit() {
   if (!selectedFile.value) {
     fileError.value = 'Please select a file'
@@ -69,37 +58,18 @@ async function onSubmit() {
   try {
     uploading.value = true
 
-    // Create form data - using the file's name directly
-    const formData = new FormData()
-    formData.append('file', selectedFile.value)
-    formData.append('fileName', selectedFile.value.name)
+    const result = await uploadFile(selectedFile.value);
+    console.log(JSON.stringify(result, null, 2))
 
-    // TODO: Replace with your actual API endpoint for file upload
-    // const response = await fetch('/api/files/upload', {
-    //   method: 'POST',
-    //   body: formData,
-    // })
-
-    // if (!response.ok) {
-    //   throw new Error('Upload failed')
-    // }
-
-    // Simulate API call for now
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    console.log('File uploaded:', formData.get('fileName'));
-
-    // Close modal and notify parent
     closeModal()
     emit('uploaded')
   } catch (error) {
     console.error('Upload error:', error)
-    // TODO: Show error notification
   } finally {
     uploading.value = false
   }
 }
 
-// Reset the form
 function resetForm() {
   selectedFile.value = null
   fileError.value = ''
@@ -110,8 +80,7 @@ function resetForm() {
   <UModal v-model:open="isOpen" title="Upload New File" :ui="{ content: 'w-[400px]' }"
     :close="{ class: 'cursor-pointer' }" description="Choose a file to upload">
     <!-- Button that opens the modal -->
-    <UButton icon="i-lucide-upload" label="Upload File" color="success" class="cursor-pointer"
-      @click="isOpen = true" />
+    <UButton icon="i-lucide-upload" label="Upload File" color="success" class="cursor-pointer" @click="isOpen = true" />
 
     <!-- Modal content -->
     <template #body>
