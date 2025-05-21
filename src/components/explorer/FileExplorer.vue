@@ -6,7 +6,13 @@ const view = ref<'grid' | 'list'>('list')
 const folders = ref<string[]>(['Documents', 'Pictures', 'Videos'])
 const files = ref<string[]>(['Report.pdf', 'Photo.png', 'Video.mp4'])
 
-const columns = ref<TableColumn[]>([
+interface TableColumProps {
+  accessorKey?: string
+  header?: string
+  id?: string
+}
+
+const columns = ref<TableColumn<TableColumProps>[]>([
   { accessorKey: 'name', header: 'Name' },
   { accessorKey: 'type', header: 'Type' },
   { accessorKey: 'size', header: 'Size' },
@@ -65,17 +71,7 @@ function getActions(item: { name: string; type: string; size: string }): Dropdow
 
     <!-- List View as Table -->
     <div v-else class="flex justify-center">
-      <UTable :columns="columns" :data="rows" striped hoverable scrollable class="w-[95%]" :ui="{
-        thead: {
-          base: 'dark:bg-gray-800',
-          tr: 'dark:border-gray-700',
-          th: { padding: 'dark:text-gray-300' }
-        },
-        tbody: {
-          tr: 'dark:border-gray-700 dark:hover:bg-gray-700',
-          td: 'dark:border-gray-700'
-        }
-      }">
+      <UTable :columns="columns" :data="rows" striped hoverable scrollable class="w-[95%]">
         <!-- Icon + Name cell -->
         <template #name-cell="{ row }">
           <div class="flex items-center gap-2">

@@ -2,6 +2,7 @@ import type { LoginData } from '@/dtos/LoginData'
 import type { LoginFormData } from '@/dtos/LoginFormData'
 import type { RegisterFormData } from '@/dtos/RegisterFormData'
 import apiClient, { makeRequest } from '@/services/ApiClient.ts'
+import type { ApiResult } from '@/types/ApiResult'
 import type { Token } from '@/types/Token'
 import { jwtDecode } from 'jwt-decode'
 
@@ -12,11 +13,6 @@ export function getJwtClaims(token: string): Token | undefined {
   } catch (error: any) {
     console.log('Error during JWT decode: ' + error)
   }
-}
-
-//TODO: Zasto nemoze biti u zasebnom fajlu
-interface ApiResult {
-  success: boolean
 }
 
 export function login(data: LoginFormData): Promise<LoginData> {

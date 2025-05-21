@@ -3,7 +3,6 @@ import { ApiError } from '@/types/ApiError'
 import type { FailedRequest } from '@/types/FailedRequest'
 
 const baseURL = import.meta.env.VITE_BACKEND_URL
-const tokenPrefix = import.meta.env.VITE_TOKEN_NAME
 let isRefreshing = false
 let failedQueue: FailedRequest[] = []
 
@@ -41,7 +40,7 @@ const processQueue = (error: any, token: string | null = null) => {
 // Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem(`${tokenPrefix}_access_token`) // Assuming tokens are stored in localStorage
+    const token = localStorage.getItem("access_token") // Assuming tokens are stored in localStorage
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token
     }
