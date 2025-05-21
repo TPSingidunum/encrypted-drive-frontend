@@ -40,7 +40,7 @@ const processQueue = (error: any, token: string | null = null) => {
 // Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("access_token") // Assuming tokens are stored in localStorage
+    const token = localStorage.getItem('access_token')
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token
     }
@@ -76,13 +76,13 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true
       isRefreshing = true
 
-      const refreshToken = localStorage.getItem(`${tokenPrefix}_refresh_token`)
+      const refreshToken = localStorage.getItem('refresh_token')
       try {
         const { data } = await axios.post(`${baseURL}/api/auth/refresh`, {
           refreshToken: refreshToken,
         })
 
-        localStorage.setItem(`${tokenPrefix}_access_token`, data.accessToken)
+        localStorage.setItem('access_token', data.accessToken)
         apiClient.defaults.headers.common['Authorization'] = 'Bearer ' + data.access_token
         originalRequest.headers['Authorization'] = 'Bearer ' + data.access_token
         processQueue(null, data.access_token)
