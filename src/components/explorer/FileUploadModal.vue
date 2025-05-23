@@ -2,6 +2,7 @@
 import { uploadFile } from '@/services/StorageService'
 import { ref } from 'vue'
 import { z } from 'zod'
+import { userStorageStore } from '@/stores/StorageStore'
 
 const emit = defineEmits(['uploaded'])
 const isOpen = ref(false)
@@ -10,6 +11,7 @@ const selectedFile = ref<File | null>(null)
 const fileError = ref('')
 const schema = z.object({})
 const state = ref({})
+const storageStore = userStorageStore()
 
 function closeModal() {
   isOpen.value = false
@@ -58,7 +60,7 @@ async function onSubmit() {
   try {
     uploading.value = true
 
-    const result = await uploadFile(selectedFile.value);
+    const result = await uploadFile(storageStore.getCurrentWorkspace, selectedFile.value);
     console.log(JSON.stringify(result, null, 2))
 
     closeModal()

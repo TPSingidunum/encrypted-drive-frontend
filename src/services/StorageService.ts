@@ -3,8 +3,9 @@ import type { ApiResult } from '@/types/ApiResult'
 import type { Children } from '@/types/Children'
 import type { Workspace } from '@/types/Workspace'
 
-export function uploadFile(file: File): Promise<ApiResult> {
+export function uploadFile(workspaceId: number, file: File): Promise<ApiResult> {
   const formData = new FormData()
+  formData.append('workspaceId', workspaceId.toString())
   formData.append('file', file)
 
   return makeRequest(() =>

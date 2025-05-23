@@ -4,12 +4,14 @@ import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { getWorkspaces, getWorkspaceChildren } from '@/services/StorageService'
 import type { Workspace } from '@/types/Workspace'
 import type { Children } from '@/types/Children'
+import { userStorageStore } from '@/stores/StorageStore'
 
 const view = ref<'grid' | 'list'>('list')
 const workspaces = ref<Workspace[]>([])
 const dropdownWorkspaces = ref<{ label: string, value: number }[]>([]);
 const selectedWorkspace = ref();
 const rows = ref();
+const storageStore = userStorageStore();
 
 export interface StorageRow {
   id: number
@@ -64,6 +66,8 @@ async function fetchWorkspaces() {
     }))
 
     selectedWorkspace.value = dropdownWorkspaces.value[0]
+    storageStore.setCurrentWorkspace(dropdownWorkspaces.value[0].value)
+
     await fetchWorkspaceChildren(selectedWorkspace.value.value)
   } catch (error) {
     console.error('Failed to fetch workspaces:', error)
@@ -85,6 +89,8 @@ function onWorkspaceSelected(workspace: { label: string, value: number }) {
   }
 
   selectedWorkspace.value = workspace;
+  storageStore.setCurrentWorkspace(workspace.value)
+
   fetchWorkspaceChildren(workspace.value);
 }
 
@@ -131,13 +137,8 @@ function getActions(item: StorageRow): DropdownMenuItem[][] {
     <!-- View Controls -->
     <div class="flex items-center justify-between mb-4">
       <div class="flex space-x-2">
-      <USelectMenu
-        v-model="selectedWorkspace"
-        :items="dropdownWorkspaces"
-        placeholder="Select Workspace"
-        class="w-[200px] cursor-pointer"
-        @update:model-value="onWorkspaceSelected(selectedWorkspace)"
-      />
+        <USelectMenu v-model="selectedWorkspace" :items="dropdownWorkspaces" placeholder="Select Workspace"
+          class="w-[200px] cursor-pointer" @update:model-value="onWorkspaceSelected(selectedWorkspace)" />
         <UButton icon="i-lucide-grid" variant="outline" class="cursor-pointer" @click="view = 'grid'"
           :active="view === 'grid'" />
         <UButton icon="i-lucide-list" variant="outline" class="cursor-pointer" @click="view = 'list'"
