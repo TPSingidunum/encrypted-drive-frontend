@@ -51,7 +51,7 @@ const items = computed(() => [
   <UDropdownMenu :items="items" :ui="{ content: 'w-48' }">
     <div
       class="flex items-center space-x-3 px-4 py-2 cursor-pointer bg-gray-100 hover:bg-gray-200 rounded-xl dark:bg-gray-800 dark:hover:bg-gray-700">
-      <UAvatar src="https://github.com/benjamincanac.png" size="md" />
+      <UAvatar src="https://flowbite.com/docs/images/people/profile-picture-5.jpg" size="md" />
       <div class="flex flex-col text-left">
         <span class="text-sm font-bold">Teodor Petrovic</span>
         <span class="text-xs text-gray-500 dark:text-gray-400">teodor.z.petrovic@gmail.com</span>
