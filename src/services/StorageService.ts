@@ -3,9 +3,10 @@ import type { ApiResult } from '@/types/ApiResult'
 import type { Children } from '@/types/Children'
 import type { Workspace } from '@/types/Workspace'
 
-export function uploadFile(workspaceId: number, file: File): Promise<ApiResult> {
+export function uploadFile(workspaceId: number, folderId: number, file: File): Promise<ApiResult> {
   const formData = new FormData()
   formData.append('workspaceId', workspaceId.toString())
+  formData.append('folderId', folderId.toString())
   formData.append('file', file)
 
   return makeRequest(() =>
@@ -22,7 +23,11 @@ export function getWorkspaces(): Promise<Workspace[]> {
 }
 
 export function getWorkspaceChildren(workspaceId: number): Promise<Children> {
-  return makeRequest(() => apiClient.get('/api/storage/workspace/' + workspaceId))
+  return makeRequest(() => apiClient.get('/api/storage/workspace/' + workspaceId + '/children'))
+}
+
+export function getFolderChildren(folderId: number): Promise<Children> {
+  return makeRequest(() => apiClient.get('/api/storage/folder/' + folderId + '/children'))
 }
 
 export async function download(fileId: number): Promise<void> {

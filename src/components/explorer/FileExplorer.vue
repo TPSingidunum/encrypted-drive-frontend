@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
-import { getWorkspaces, getWorkspaceChildren, download } from '@/services/StorageService'
+import { getWorkspaces, getWorkspaceChildren, download, getFolderChildren } from '@/services/StorageService'
 import type { Workspace } from '@/types/Workspace'
 import type { Children } from '@/types/Children'
 import { userStorageStore } from '@/stores/StorageStore'
@@ -77,9 +77,21 @@ async function fetchWorkspaces() {
 async function fetchWorkspaceChildren(workspaceId: number) {
   try {
     const result = await getWorkspaceChildren(workspaceId);
+    storageStore.setCurrentFolder(0)
     setRows(result);
   } catch (error) {
     console.error('Failed to fetch workspace children:', error);
+  }
+}
+
+async function fetchFolderChildren(folderId: number) {
+  try {
+    const result = await getFolderChildren(folderId);
+    storageStore.setCurrentFolder(folderId)
+    result.folders.unshift({ folderId: storageStore.getPreviousFolder ?? 0, name: ".." })
+    setRows(result);
+  } catch (error) {
+    console.error('Failed to fetch folder children:', error);
   }
 }
 
@@ -101,7 +113,17 @@ function refresh() {
 }
 
 async function openFolder(folderId: number) {
-  console.log("Opening folder with ID:", folderId);
+  try {
+    if (folderId === 0) {
+      console.log("Folder " + folderId)
+      await fetchWorkspaceChildren(selectedWorkspace.value.value)
+    } else {
+      console.log("Folder " + folderId)
+      await fetchFolderChildren(folderId)
+    }
+  } catch (error) {
+    console.error('Failed to fetch workspace children:', error);
+  }
 }
 
 function viewFile(fileId: number, fileName: string) {
@@ -189,6 +211,7 @@ function getActions(item: StorageRow): DropdownMenuItem[][] {
         </template>
         <!-- Actions dropdown cell -->
         <template #actions-cell="{ row }">
+          <!-- TODO: Add open and close state to dropdown -->
           <UDropdownMenu :items="getActions(row.original)">
             <UButton icon="i-lucide-ellipsis-vertical" variant="ghost" size="sm" aria-label="Actions" />
           </UDropdownMenu>

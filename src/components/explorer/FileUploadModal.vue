@@ -60,7 +60,8 @@ async function onSubmit() {
   try {
     uploading.value = true
 
-    const result = await uploadFile(storageStore.getCurrentWorkspace, selectedFile.value);
+    //TODO: FIX NULL values
+    const result = await uploadFile(storageStore.getCurrentWorkspace!, storageStore.getCurrentFolder!, selectedFile.value);
     console.log(JSON.stringify(result, null, 2))
 
     closeModal()

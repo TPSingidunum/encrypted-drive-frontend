@@ -1,22 +1,22 @@
 export interface Folder {
-  folderId: number;
-  name: string;
-  workspaceId: number;
-  parentId: number;
-  createAt: Date;
-  updateAt: Date;
+  folderId: number
+  name: string
+  workspaceId?: number
+  parentId?: number
+  createAt?: Date
+  updateAt?: Date
 }
 
 export interface File {
-  fileId: number;
-  name: string;
-  workspaceId: number;
-  parentId: number;
-  createAt: Date;
-  updateAt: Date;
+  fileId: number
+  name: string
+  workspaceId: number
+  parentId: number
+  createAt: Date
+  updateAt: Date
 }
 
 export interface Children {
-  folders: Folder[];
-  files: File[];
+  folders: Folder[]
+  files: File[]
 }
