@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
-import { getWorkspaces, getWorkspaceChildren } from '@/services/StorageService'
+import { getWorkspaces, getWorkspaceChildren, download } from '@/services/StorageService'
 import type { Workspace } from '@/types/Workspace'
 import type { Children } from '@/types/Children'
 import { userStorageStore } from '@/stores/StorageStore'
@@ -122,6 +122,18 @@ function getActions(item: StorageRow): DropdownMenuItem[][] {
             viewFile(item.id, item.name)
           }
         }
+      },
+      {
+        label: 'Download',
+        icon: 'i-lucide-download',
+        onSelect: async (e: Event) => {
+          e.preventDefault()
+          if (item.type === 'Folder') {
+            return
+          } else {
+            await download(item.id);
+          }
+        }
       }
     ],
     [
@@ -130,6 +142,7 @@ function getActions(item: StorageRow): DropdownMenuItem[][] {
     ]
   ]
 }
+
 </script>
 
 <template>

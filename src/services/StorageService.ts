@@ -24,3 +24,21 @@ export function getWorkspaces(): Promise<Workspace[]> {
 export function getWorkspaceChildren(workspaceId: number): Promise<Children> {
   return makeRequest(() => apiClient.get('/api/storage/workspace/' + workspaceId))
 }
+
+export async function download(fileId: number): Promise<void> {
+  const { data, headers } = await apiClient.get('/api/storage/download/file/' + fileId, {
+    responseType: 'blob',
+  })
+
+  const contentDisposition = headers['content-disposition']
+  const filename = contentDisposition.split('; ')[1].replace('filename=', '').replaceAll('"', '')
+
+  const url = URL.createObjectURL(data)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
