@@ -1,3 +1,4 @@
+import type { CreateFolder } from '@/dtos/CreateFolder'
 import apiClient, { makeRequest } from '@/services/ApiClient.ts'
 import type { ApiResult } from '@/types/ApiResult'
 import type { Children } from '@/types/Children'
@@ -16,6 +17,10 @@ export function uploadFile(workspaceId: number, folderId: number, file: File): P
       },
     }),
   )
+}
+
+export function createFolder(data: CreateFolder): Promise<ApiResult> {
+  return makeRequest(() => apiClient.post('/api/storage/folder', data))
 }
 
 export function getWorkspaces(): Promise<Workspace[]> {
