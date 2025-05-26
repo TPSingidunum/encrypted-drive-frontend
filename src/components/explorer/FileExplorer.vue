@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { getWorkspaces, getWorkspaceChildren, download, getFolderChildren } from '@/services/StorageService'
 import type { Workspace } from '@/types/Workspace'
@@ -18,6 +18,7 @@ export interface StorageRow {
   name: string
   type: 'Folder' | 'File'
   size: string
+  parentId: number | null
   createdAt: string
   updatedAt: string
 }
@@ -78,48 +79,43 @@ async function fetchWorkspaceChildren(workspaceId: number) {
   try {
     const result = await getWorkspaceChildren(workspaceId);
     storageStore.setCurrentFolder(0)
+    storageStore.setPrevFolder(0)
     setRows(result);
   } catch (error) {
     console.error('Failed to fetch workspace children:', error);
   }
 }
 
-async function fetchFolderChildren(folderId: number) {
+async function fetchFolderChildren(folderId: number, parentId: number | null = null) {
   try {
+    console.log("Fetching folder children for folderId:", folderId, "parentId:", parentId);
     const result = await getFolderChildren(folderId);
     storageStore.setCurrentFolder(folderId)
-    result.folders.unshift({ folderId: storageStore.getPreviousFolder ?? 0, name: ".." })
+    storageStore.setPrevFolder(parentId == null ? 0 : parentId);
+
+    result.folders.unshift({ folderId: storageStore.getPreviousFolder!, name: "..", parentId: 0 })
     setRows(result);
   } catch (error) {
     console.error('Failed to fetch folder children:', error);
   }
 }
 
-function onWorkspaceSelected(workspace: { label: string, value: number }) {
-  if (selectedWorkspace.value === workspace) {
-    return
-  }
-
-  selectedWorkspace.value = workspace;
-  storageStore.setCurrentWorkspace(workspace.value)
-
-  fetchWorkspaceChildren(workspace.value);
-}
-
 function refresh() {
-  if (selectedWorkspace.value) {
+  if (storageStore.getCurrentFolder === 0) {
     fetchWorkspaceChildren(selectedWorkspace.value.value);
+  } else {
+    fetchFolderChildren(storageStore.getCurrentFolder!);
   }
 }
 
-async function openFolder(folderId: number) {
+async function openFolder(folderId: number, parentId: number | null = null) {
   try {
     if (folderId === 0) {
       console.log("Folder " + folderId)
       await fetchWorkspaceChildren(selectedWorkspace.value.value)
     } else {
       console.log("Folder " + folderId)
-      await fetchFolderChildren(folderId)
+      await fetchFolderChildren(folderId, parentId)
     }
   } catch (error) {
     console.error('Failed to fetch workspace children:', error);
@@ -136,10 +132,9 @@ function getActions(item: StorageRow): DropdownMenuItem[][] {
       {
         label: item.type === 'Folder' ? 'Open' : 'View',
         icon: item.type === 'Folder' ? 'i-lucide-folder-open' : 'i-lucide-eye',
-        onSelect: (e: Event) => {
-          e.preventDefault()
+        onSelect: () => {
           if (item.type === 'Folder') {
-            openFolder(item.id)
+            openFolder(item.id, item.parentId)
           } else {
             viewFile(item.id, item.name)
           }
@@ -148,8 +143,7 @@ function getActions(item: StorageRow): DropdownMenuItem[][] {
       {
         label: 'Download',
         icon: 'i-lucide-download',
-        onSelect: async (e: Event) => {
-          e.preventDefault()
+        onSelect: async () => {
           if (item.type === 'Folder') {
             return
           } else {
@@ -165,6 +159,13 @@ function getActions(item: StorageRow): DropdownMenuItem[][] {
   ]
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+watch(selectedWorkspace, (wsId, _old) => {
+  console.log('Selected workspace changed:', JSON.stringify(wsId, null, 2))
+  storageStore.setCurrentWorkspace(wsId.value)
+  fetchWorkspaceChildren(wsId.value)
+})
+
 </script>
 
 <template>
@@ -172,15 +173,13 @@ function getActions(item: StorageRow): DropdownMenuItem[][] {
     <!-- View Controls -->
     <div class="flex items-center justify-between mb-4">
       <div class="flex space-x-2">
-        <USelectMenu v-model="selectedWorkspace" :items="dropdownWorkspaces" placeholder="Select Workspace"
-          class="w-[200px] cursor-pointer" @update:model-value="onWorkspaceSelected(selectedWorkspace)" />
-        <UButton icon="i-lucide-grid" variant="outline" class="cursor-pointer" @click="view = 'grid'"
-          :active="view === 'grid'" />
-        <UButton icon="i-lucide-list" variant="outline" class="cursor-pointer" @click="view = 'list'"
-          :active="view === 'list'" />
+        <USelectMenu v-model="selectedWorkspace" :items="dropdownWorkspaces" placeholder="Select Workspace" class="w-[200px] cursor-pointer" />
+        <UButton icon="i-lucide-grid" variant="outline" class="cursor-pointer" @click="view = 'grid'" :active="view === 'grid'" />
+        <UButton icon="i-lucide-list" variant="outline" class="cursor-pointer" @click="view = 'list'" :active="view === 'list'" />
       </div>
       <div class="flex space-x-2">
-        <FileUploadModal />
+        <CreateFolderModal @created="refresh" />
+        <FileUploadModal @uploaded="refresh"/>
         <UButton icon="i-lucide-refresh-ccw" class="cursor-pointer" variant="outline" @click="refresh" />
       </div>
     </div>
@@ -199,14 +198,18 @@ function getActions(item: StorageRow): DropdownMenuItem[][] {
       /> -->
     </div>
 
-    <!-- List View as Table -->
     <div v-else class="flex justify-center">
-      <UTable :columns="columns" :data="rows" striped hoverable scrollable class="w-[95%]">
-        <!-- Icon + Name cell -->
+      <UTable :columns="columns" :data="rows" striped hoverable scrollable class="w-[95%] max-h-[600px]">
         <template #name-cell="{ row }">
-          <div class="flex items-center gap-2">
+          <div
+          :class="[
+            'flex items-center gap-2 select-none',
+            row.original.type === 'Folder' ? 'cursor-pointer' : ''
+          ]"
+            @click="row.original.type === 'Folder' ? openFolder(row.original.id, row.original.parentId) : viewFile(row.original.id, row.original.name)"
+          >
             <UIcon :name="row.original.type === 'Folder' ? 'i-lucide-folder' : 'i-lucide-file'" class="size-5" />
-            <span>{{ row.original.name }}</span>
+            <span class="text-black dark:text-white">{{ row.original.name }}</span>
           </div>
         </template>
         <!-- Actions dropdown cell -->

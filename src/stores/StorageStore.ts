@@ -12,8 +12,10 @@ export const userStorageStore = defineStore('storage', {
       this.currentWorkspace = workspaceId
     },
     setCurrentFolder(id: number) {
-      this.previousFolder = this.currentFolder
       this.currentFolder = id
+    },
+    setPrevFolder(id: number) {
+      this.previousFolder = id;
     },
   },
 

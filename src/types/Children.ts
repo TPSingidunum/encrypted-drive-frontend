@@ -2,7 +2,7 @@ export interface Folder {
   folderId: number
   name: string
   workspaceId?: number
-  parentId?: number
+  parentId: number
   createAt?: Date
   updateAt?: Date
 }

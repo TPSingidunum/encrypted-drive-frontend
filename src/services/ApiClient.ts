@@ -88,6 +88,9 @@ apiClient.interceptors.response.use(
         processQueue(null, data.access_token)
         return apiClient(originalRequest)
       } catch (err) {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
+
         processQueue(err, null)
         return Promise.reject(err)
       } finally {
