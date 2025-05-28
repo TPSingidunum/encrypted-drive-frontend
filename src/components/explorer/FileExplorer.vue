@@ -5,6 +5,7 @@ import { getWorkspaces, getWorkspaceChildren, download, getFolderChildren } from
 import type { Workspace } from '@/types/Workspace'
 import type { Children } from '@/types/Children'
 import { userStorageStore } from '@/stores/StorageStore'
+import type { StorageRow } from '@/types/StorageRow'
 
 const view = ref<'grid' | 'list'>('list')
 const workspaces = ref<Workspace[]>([])
@@ -12,15 +13,10 @@ const dropdownWorkspaces = ref<{ label: string, value: number }[]>([]);
 const selectedWorkspace = ref();
 const rows = ref();
 const storageStore = userStorageStore();
+const loading = ref(false);
 
-export interface StorageRow {
-  id: number
-  name: string
-  type: 'Folder' | 'File'
-  size: string
-  parentId: number | null
-  createdAt: string
-  updatedAt: string
+function toggleLoading() {
+  loading.value = !loading.value;
 }
 
 const columns = ref<TableColumn<StorageRow>[]>([
@@ -36,6 +32,7 @@ function setRows(children: Children) {
     name: folder.name,
     type: 'Folder',
     size: '-',
+    parentId: folder.parentId ?? 0,
     createdAt: folder.createAt,
     updatedAt: folder.updateAt
   }))
@@ -45,6 +42,7 @@ function setRows(children: Children) {
     name: file.name,
     type: 'File',
     size: '-',
+    parentId: file.parentId ?? 0,
     createdAt: file.createAt,
     updatedAt: file.updateAt
   }))
@@ -52,12 +50,12 @@ function setRows(children: Children) {
   rows.value = [...folderRows, ...fileRows]
 }
 
-// Fetch workspaces on component mount
 onMounted(async () => {
   await fetchWorkspaces()
 })
 
 async function fetchWorkspaces() {
+  toggleLoading();
   try {
     const result = await getWorkspaces();
     workspaces.value = result;
@@ -73,9 +71,11 @@ async function fetchWorkspaces() {
   } catch (error) {
     console.error('Failed to fetch workspaces:', error)
   }
+  toggleLoading();
 }
 
 async function fetchWorkspaceChildren(workspaceId: number) {
+  toggleLoading();
   try {
     const result = await getWorkspaceChildren(workspaceId);
     storageStore.setCurrentFolder(0)
@@ -84,11 +84,12 @@ async function fetchWorkspaceChildren(workspaceId: number) {
   } catch (error) {
     console.error('Failed to fetch workspace children:', error);
   }
+  toggleLoading();
 }
 
 async function fetchFolderChildren(folderId: number, parentId: number | null = null) {
+  toggleLoading();
   try {
-    console.log("Fetching folder children for folderId:", folderId, "parentId:", parentId);
     const result = await getFolderChildren(folderId);
     storageStore.setCurrentFolder(folderId)
     storageStore.setPrevFolder(parentId == null ? 0 : parentId);
@@ -98,23 +99,24 @@ async function fetchFolderChildren(folderId: number, parentId: number | null = n
   } catch (error) {
     console.error('Failed to fetch folder children:', error);
   }
+  toggleLoading();
 }
 
 function refresh() {
+  toggleLoading();
   if (storageStore.getCurrentFolder === 0) {
     fetchWorkspaceChildren(selectedWorkspace.value.value);
   } else {
     fetchFolderChildren(storageStore.getCurrentFolder!);
   }
+  toggleLoading();
 }
 
 async function openFolder(folderId: number, parentId: number | null = null) {
   try {
     if (folderId === 0) {
-      console.log("Folder " + folderId)
       await fetchWorkspaceChildren(selectedWorkspace.value.value)
     } else {
-      console.log("Folder " + folderId)
       await fetchFolderChildren(folderId, parentId)
     }
   } catch (error) {
@@ -161,7 +163,6 @@ function getActions(item: StorageRow): DropdownMenuItem[][] {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 watch(selectedWorkspace, (wsId, _old) => {
-  console.log('Selected workspace changed:', JSON.stringify(wsId, null, 2))
   storageStore.setCurrentWorkspace(wsId.value)
   fetchWorkspaceChildren(wsId.value)
 })
@@ -170,7 +171,6 @@ watch(selectedWorkspace, (wsId, _old) => {
 
 <template>
   <div class="flex flex-col h-full">
-    <!-- View Controls -->
     <div class="flex items-center justify-between mb-4">
       <div class="flex space-x-2">
         <USelectMenu v-model="selectedWorkspace" :items="dropdownWorkspaces" placeholder="Select Workspace" class="w-[200px] cursor-pointer" />
@@ -199,7 +199,16 @@ watch(selectedWorkspace, (wsId, _old) => {
     </div>
 
     <div v-else class="flex justify-center">
-      <UTable :columns="columns" :data="rows" striped hoverable scrollable class="w-[95%] max-h-[600px]">
+      <UTable
+        :columns="columns"
+        :data="rows"
+        :loading="loading"
+        striped
+        hoverable
+        scrollable
+        :ui="{ tr: { base: 'hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer' } }"
+        class="w-[95%] max-h-[600px]"
+        >
         <template #name-cell="{ row }">
           <div
           :class="[

@@ -22,3 +22,42 @@ export function login(data: LoginFormData): Promise<LoginData> {
 export function register(data: RegisterFormData): Promise<ApiResult> {
   return makeRequest(() => apiClient.post('/api/auth/register', data))
 }
+
+export async function refreshAccessToken(): Promise<boolean> {
+  const refreshToken = localStorage.getItem('refresh_token')
+  if (!refreshToken) {
+    return false
+  }
+
+  try {
+    const { accessToken } = await makeRequest(() =>
+      apiClient.post('/api/auth/refresh', { refreshToken }),
+    )
+
+    localStorage.setItem('access_token', accessToken)
+    return true
+  } catch {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    return false
+  }
+}
+
+export async function verifyToken(): Promise<boolean> {
+  const token = localStorage.getItem('access_token')
+  if (!token) {
+    return false
+  }
+
+  const claims = getJwtClaims(token)
+  if (!claims) {
+    return false
+  }
+
+  const isExpired = claims.exp * 1000 <= Date.now()
+  if (!isExpired) {
+    return true
+  }
+
+  return await refreshAccessToken()
+}

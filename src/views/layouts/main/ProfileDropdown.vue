@@ -1,22 +1,26 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useColorMode } from '@vueuse/core'
+import { useRouter } from 'vue-router'
 
 const colorMode = useColorMode()
-
-// Reactive reference for dark mode state
+const router = useRouter()
 const isDarkMode = ref(colorMode.value === 'dark')
 
-// Watch for changes and update the color mode
 watch(isDarkMode, (newValue) => {
   colorMode.value = newValue ? 'dark' : 'light'
 })
 
-// Build dropdown items with the theme toggle
+
+function logout() {
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('refresh_token')
+  router.push('/login')
+}
+
 const items = computed(() => [
   [
     { label: 'Profile', icon: 'i-lucide-user', to: '/profile' },
-    { label: 'Settings', icon: 'i-lucide-cog', to: '/settings' }
   ],
   [
     {
@@ -42,7 +46,11 @@ const items = computed(() => [
     }
   ],
   [
-    { label: 'Log out', icon: 'i-lucide-log-out', to: '/logout' }
+    {
+      label: 'Log out',
+      icon: 'i-lucide-log-out',
+      onSelect: () => logout(),
+    }
   ]
 ])
 </script>

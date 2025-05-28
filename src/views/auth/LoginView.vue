@@ -88,7 +88,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         <p class="text-red-500 text-sm text-center w-full font-bold" v-if="errorField"> {{ errorField }}</p>
 
         <div class="flex justify-end">
-          <UButton type="submit" class="justify-center cursor-pointer" loading-auto> Submit </UButton>
+          <UButton type="submit" class="justify-center cursor-pointer" loading-auto> Login </UButton>
         </div>
       </UForm>
 

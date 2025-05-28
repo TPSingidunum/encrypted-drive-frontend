@@ -26,8 +26,8 @@ function handleFileChange(event: Event) {
     const file = input.files[0]
 
     // Validate file size (20MB max)
-    if (file.size > 20 * 1024 * 1024) {
-      fileError.value = 'File must be smaller than 20MB'
+    if (file.size > 2000 * 1024 * 1024) {
+      fileError.value = 'File must be smaller than 2000MB'
       return
     }
 
