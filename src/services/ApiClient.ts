@@ -15,7 +15,6 @@ export async function makeRequest<T>(requestFunc: () => Promise<AxiosResponse<T>
       const { statusCode, errorCode, message } = error.response.data
       throw new ApiError(statusCode, errorCode, message)
     } else {
-      console.log(JSON.stringify(error, null, 2))
       throw new Error('Network error or unexpected error occurred')
     }
   }
