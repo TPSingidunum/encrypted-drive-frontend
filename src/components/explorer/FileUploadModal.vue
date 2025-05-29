@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { uploadFile } from '@/services/StorageService'
 import { ref } from 'vue'
 import { z } from 'zod'
 import { userStorageStore } from '@/stores/StorageStore'
@@ -60,22 +59,10 @@ async function onSubmit() {
   try {
     uploading.value = true
 
-    const id = storageStore.addUpload(selectedFile.value.name)
+    // Just add to queue and close modal
+    storageStore.addToQueue(selectedFile.value)
 
-    const result = await uploadFile(
-      storageStore.getCurrentWorkspace!,
-      storageStore.getCurrentFolder!,
-      selectedFile.value,
-      (p) => {
-        storageStore.updateProgress(id, p)
-        if (p >= 100) {
-          storageStore.setStatus(id, 'processing')
-        }
-      },
-    )
-    storageStore.setStatus(id, 'success')
-    console.log(JSON.stringify(result, null, 2))
-
+    // Close modal and notify parent
     closeModal()
     emit('uploaded')
   } catch (error) {
