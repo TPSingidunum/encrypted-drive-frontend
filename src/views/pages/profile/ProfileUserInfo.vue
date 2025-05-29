@@ -14,8 +14,8 @@ onMounted(async () => {
 async function checkExistingKey() {
   try {
     loading.value = true;
-    const publicKey = await getCurrentPublicKey();
-    hasRegisteredKey.value = publicKey != null;
+    const result = await getCurrentPublicKey();
+    hasRegisteredKey.value = result.success;
   } catch (error) {
     console.error('Error checking existing key:', error);
   } finally {

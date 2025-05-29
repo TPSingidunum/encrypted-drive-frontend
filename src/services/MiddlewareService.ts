@@ -22,7 +22,7 @@ export async function checkMiddlewareStatus(): Promise<boolean> {
   }
 }
 
-export async function getCertificates(): Promise<Certificate[] | undefined> {
+export async function getCertificates(): Promise<string[] | undefined> {
   try {
     const response = await middlewareClient.get('/api/tokens');
     return response.data;
@@ -33,8 +33,13 @@ export async function getCertificates(): Promise<Certificate[] | undefined> {
 
 export async function getPublicKey(token: string): Promise<string | undefined> {
   try {
-    const response = await middlewareClient.post('/api/public-key?token=' + token );
-    return response.data.publicKey;
+    const response = await middlewareClient.get(`/api/public-key?token=${token}`, {
+      responseType: 'text',
+      headers: {
+        'Accept': 'text/plain'
+      }
+    });
+    return response.data;
   } catch (error) {
     console.error('Failed to get public key:', error);
   }

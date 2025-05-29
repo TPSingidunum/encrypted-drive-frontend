@@ -63,12 +63,12 @@ export async function verifyToken(): Promise<boolean> {
   return await refreshAccessToken()
 }
 
-export async function getCurrentPublicKey(): Promise<string | null> {
+export async function getCurrentPublicKey(): Promise<ApiResult> {
     return await makeRequest(() => apiClient.get('/api/user/public-key'))
 }
 
 export async function registerPublicKey(publicKey: string): Promise<ApiResult> {
-  return makeRequest(() => apiClient.post('/api/user/register-key', { publicKey }))
+  return makeRequest(() => apiClient.post('/api/user/register/public-key', { publicKey }))
 }
 
 export async function getUserInformation(): Promise<User> {

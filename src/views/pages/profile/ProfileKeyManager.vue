@@ -2,39 +2,44 @@
 import { ref, onMounted } from 'vue';
 import { getCertificates, getPublicKey } from '@/services/MiddlewareService';
 import { registerPublicKey } from '@/services/AuthService';
-import type { Certificate } from '@/services/MiddlewareService';
+import { z } from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui';
 
-const certificates = ref<Certificate[]>([]);
-const selectedCertificate = ref('');
+const certificates = ref<{label: string, value: string}[]>([]);
 const loading = ref(false);
 const error = ref('');
 const success = ref('');
 
-// Keep schema as is
-const schema = {
-  certificate: {
-    label: 'Select Certificate',
-    required: true
-  }
-};
+type Schema = z.output<typeof schema>
+const schema = z.object({
+  certificate: z.string().min(1, 'Please select a certificate')
+});
 
 const state = ref({
   certificate: ''
 });
 
 onMounted(async () => {
+  certificates.value = []; // Reset certificates array before loading
   await loadCertificates();
 });
 
 async function loadCertificates() {
-  console.log("Current certificates:", JSON.stringify(certificates.value, null, 2));
   try {
     loading.value = true;
-    const result = await getCertificates();
-    // Handle potential undefined result
-    console.log('Loaded certificates:', JSON.stringify(result, null, 2));
-    console.log('Certificates type:', Array.isArray(result) ? 'Array' : typeof result);
-    certificates.value = Array.isArray(result) ? result : [];
+    certificates.value = []; // Clear existing certificates
+    const result = await getCertificates() as unknown as string[];
+
+    if (Array.isArray(result)) {
+      // Process each token into the format expected by USelect
+      for (const token of result) {
+        certificates.value.push({
+          label: token,
+          value: token
+        });
+      }
+    }
+
     error.value = '';
   } catch (err: any) {
     error.value = err.message || 'Failed to load certificates';
@@ -44,19 +49,17 @@ async function loadCertificates() {
   }
 }
 
-async function onSubmit() {
-  if (!selectedCertificate.value) {
-    error.value = 'Please select a certificate';
-    return;
-  }
+// Update to handle form submission properly
+async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     loading.value = true;
     error.value = '';
     success.value = '';
 
-    // Get public key from middleware with undefined check
-    const publicKey = await getPublicKey(selectedCertificate.value);
+    // Get public key using the selected certificate
+    const publicKey = await getPublicKey(event.data.certificate);
+    console.log('Public Key:', publicKey);
 
     if (!publicKey) {
       throw new Error('Public key could not be retrieved from middleware');
@@ -66,15 +69,12 @@ async function onSubmit() {
     await registerPublicKey(publicKey);
 
     success.value = 'Certificate successfully registered';
-    state.value.certificate = selectedCertificate.value;
-
   } catch (err: any) {
     error.value = err.message || 'Failed to register certificate';
   } finally {
     loading.value = false;
   }
 }
-
 </script>
 
 <template>
@@ -101,17 +101,20 @@ async function onSubmit() {
         </UAlert>
 
         <UForm :schema="schema" :state="state" @submit="onSubmit">
-          <USelect v-model="selectedCertificate" :options="certificates.map(cert => ({
-            label: cert?.name || 'Unknown Certificate',
-            value: cert?.token || ''
-          }))" placeholder="Select a certificate" :loading="loading"
-            :disabled="loading || certificates.length === 0" />
+          <!-- Direct USelect without UFormGroup -->
+          <USelect
+            v-model="state.certificate"
+            :items="certificates"
+            placeholder="Select a certificate"
+            :loading="loading"
+            :disabled="loading || certificates.length === 0"
+          />
 
           <div class="mt-4 flex justify-end space-x-3">
-            <UButton type="button" color="success" @click="loadCertificates" :disabled="loading">
+            <UButton class="cursor-pointer" type="button" color="success" @click="loadCertificates" :disabled="loading">
               Refresh Certificates
             </UButton>
-            <UButton type="submit" :loading="loading" :disabled="loading || certificates.length === 0">
+            <UButton class="cursor-pointer" type="submit" :loading="loading" :disabled="loading || certificates.length === 0">
               Register Certificate
             </UButton>
           </div>
