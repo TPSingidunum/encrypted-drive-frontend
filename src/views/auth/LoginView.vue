@@ -39,7 +39,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       })
     }
 
-    return router.push('/')
+     router.push('/')
   } catch (error: any) {
     if (error instanceof ApiError) {
       switch (error.errorCode) {

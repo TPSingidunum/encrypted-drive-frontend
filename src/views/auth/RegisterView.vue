@@ -34,7 +34,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       return;
     }
 
-    return router.push('/login')
+    router.push('/login')
   } catch (error: any) {
     if (error instanceof ApiError) {
       switch (error.errorCode) {

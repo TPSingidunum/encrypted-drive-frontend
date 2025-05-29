@@ -60,8 +60,20 @@ async function onSubmit() {
   try {
     uploading.value = true
 
-    //TODO: FIX NULL values
-    const result = await uploadFile(storageStore.getCurrentWorkspace!, storageStore.getCurrentFolder!, selectedFile.value);
+    const id = storageStore.addUpload(selectedFile.value.name)
+
+    const result = await uploadFile(
+      storageStore.getCurrentWorkspace!,
+      storageStore.getCurrentFolder!,
+      selectedFile.value,
+      (p) => {
+        storageStore.updateProgress(id, p)
+        if (p >= 100) {
+          storageStore.setStatus(id, 'processing')
+        }
+      },
+    )
+    storageStore.setStatus(id, 'success')
     console.log(JSON.stringify(result, null, 2))
 
     closeModal()

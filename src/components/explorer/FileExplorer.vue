@@ -206,7 +206,7 @@ watch(selectedWorkspace, (wsId, _old) => {
         striped
         hoverable
         scrollable
-        :ui="{ tr: { base: 'hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer' } }"
+        :ui="{ tr: 'hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer' } "
         class="w-[95%] max-h-[600px]"
         >
         <template #name-cell="{ row }">
@@ -230,5 +230,6 @@ watch(selectedWorkspace, (wsId, _old) => {
         </template>
       </UTable>
     </div>
+    <UploadQueue />
   </div>
 </template>

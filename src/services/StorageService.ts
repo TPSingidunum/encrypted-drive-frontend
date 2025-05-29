@@ -4,7 +4,12 @@ import type { ApiResult } from '@/types/ApiResult'
 import type { Children } from '@/types/Children'
 import type { Workspace } from '@/types/Workspace'
 
-export function uploadFile(workspaceId: number, folderId: number, file: File): Promise<ApiResult> {
+export function uploadFile(
+  workspaceId: number,
+  folderId: number,
+  file: File,
+  onProgress?: (progress: number) => void,
+): Promise<ApiResult> {
   const formData = new FormData()
   formData.append('workspaceId', workspaceId.toString())
   formData.append('folderId', folderId.toString())
@@ -14,6 +19,11 @@ export function uploadFile(workspaceId: number, folderId: number, file: File): P
     apiClient.post('/api/storage/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (e) => {
+        if (onProgress && e.total) {
+          onProgress(Math.round((e.loaded * 100) / e.total))
+        }
       },
     }),
   )
