@@ -4,6 +4,7 @@ import type { RegisterFormData } from '@/dtos/RegisterFormData'
 import apiClient, { makeRequest } from '@/services/ApiClient.ts'
 import type { ApiResult } from '@/types/ApiResult'
 import type { Token } from '@/types/Token'
+import type { User } from '@/types/User'
 import { jwtDecode } from 'jwt-decode'
 
 export function getJwtClaims(token: string): Token | undefined {
@@ -60,4 +61,16 @@ export async function verifyToken(): Promise<boolean> {
   }
 
   return await refreshAccessToken()
+}
+
+export async function getCurrentPublicKey(): Promise<string | null> {
+    return await makeRequest(() => apiClient.get('/api/user/public-key'))
+}
+
+export async function registerPublicKey(publicKey: string): Promise<ApiResult> {
+  return makeRequest(() => apiClient.post('/api/user/register-key', { publicKey }))
+}
+
+export async function getUserInformation(): Promise<User> {
+    return await makeRequest(() => apiClient.get('/api/user'))
 }
