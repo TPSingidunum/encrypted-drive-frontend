@@ -6,6 +6,7 @@ import type { Workspace } from '@/types/Workspace'
 import type { Children } from '@/types/Children'
 import { userStorageStore } from '@/stores/StorageStore'
 import type { StorageRow } from '@/types/StorageRow'
+import { downloadDecrypted } from '@/services/MiddlewareService'
 
 const view = ref<'grid' | 'list'>('list')
 const workspaces = ref<Workspace[]>([])
@@ -149,7 +150,8 @@ function getActions(item: StorageRow): DropdownMenuItem[][] {
           if (item.type === 'Folder') {
             return
           } else {
-            await download(item.id);
+            // await download(item.id);
+            await downloadDecrypted(item.id, "tpetrovic");
           }
         }
       }

@@ -44,3 +44,34 @@ export async function getPublicKey(token: string): Promise<string | undefined> {
     console.error('Failed to get public key:', error);
   }
 }
+
+export async function downloadDecrypted(
+  fileId: number,
+  tokenName: string,
+): Promise<void> {
+  const accessToken = localStorage.getItem('access_token')!;
+  // call middleware, passing through your auth cookie / JWT
+  const { data: blob, headers } = await middlewareClient.get(
+    `/api/decrypt/file/${fileId}?token=${encodeURIComponent(tokenName)}`,
+    {
+      responseType: 'blob',
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    }
+  );
+
+  // pull the filename back out of the Content-Disposition
+  const cd = headers['content-disposition'] as string;
+  const filename = cd?.split('filename=')[1]?.replace(/"/g, '') ?? `file-${fileId}`;
+
+  // download as usual
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
