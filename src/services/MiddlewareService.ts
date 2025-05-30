@@ -62,8 +62,9 @@ export async function downloadDecrypted(
   );
 
   // pull the filename back out of the Content-Disposition
-  const cd = headers['content-disposition'] as string;
-  const filename = cd?.split('filename=')[1]?.replace(/"/g, '') ?? `file-${fileId}`;
+  console.log('Headers:', JSON.stringify(headers, null, 2));
+  const contentDisposition = headers['content-disposition']
+  const filename = contentDisposition.split('; ')[1].replace('filename=', '').replaceAll('"', '')
 
   // download as usual
   const url = URL.createObjectURL(blob);
